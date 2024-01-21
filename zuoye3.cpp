@@ -4,128 +4,207 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-
-using namespace std;
+#include <map>
 
 struct Adventurer {
     int id;
-    string name;
+    std::string name;
     int strength;
+
+    Adventurer(int i, const std::string& n, int s) : id(i), name(n), strength(s) {}
 };
 
-vector<Adventurer> adventurers;
+class AdventurerManager {
+private:
+    std::vector<Adventurer> adventurers;
+    std::map<int, int> idToIndex; // 用于快速查找特定ID的冒险家在vector中的位置
 
-void insertAdventurer(int id, const string& name, int strength) {
-    Adventurer adventurer = {id, name, strength};
-    adventurers.push_back(adventurer);
-    sort(adventurers.begin(), adventurers.end(), [](const Adventurer& a, const Adventurer& b) {
-        return a.id < b.id;
-    });
-}
-
-void deleteAdventurer(int id) {
-    adventurers.erase(remove_if(adventurers.begin(), adventurers.end(), [id](const Adventurer& a) {
-        return a.id == id;
-    }), adventurers.end());
-}
-
-void deleteAdventurersInRange(int id1, int id2) {
-    adventurers.erase(remove_if(adventurers.begin(), adventurers.end(), [id1, id2](const Adventurer& a) {
-        return a.id >= id1 && a.id <= id2;
-    }), adventurers.end());
-}
-
-void queryAdventurerById(int id) {
-    auto it = find_if(adventurers.begin(), adventurers.end(), [id](const Adventurer& a) {
-        return a.id == id;
-    });
-    if (it != adventurers.end()) {
-        cout << it->id << " " << it->name << " " << it->strength << endl;
+public:
+    void insert(int id, const std::string& name, int strength) {
+        adventurers.emplace_back(id, name, strength);
+        idToIndex[id] = adventurers.size() - 1;
     }
-}
 
-void queryAdventurerByName(const string& name) {
-    for (const Adventurer& adventurer : adventurers) {
-        if (adventurer.name == name) {
-            cout << adventurer.id << " " << adventurer.name << " " << adventurer.strength << endl;
+    void remove(int id) {
+        if (idToIndex.find(id) != idToIndex.end()) {
+            int index = idToIndex[id];
+            adventurers.erase(adventurers.begin() + index);
+            idToIndex.erase(id);
+            // 更新索引映射（如果需要的话）
+            for (auto& pair : idToIndex) {
+                if (pair.second > index) {
+                    pair.second--;
+                }
+            }
         }
     }
-}
 
-void queryAdventurersByStrength(int id1, int id2, char comparison, int value) {
-    for (const Adventurer& adventurer : adventurers) {
-        if (adventurer.id >= id1 && adventurer.id <= id2) {
-            bool conditionMet = false;
-            switch (comparison) {
+    void removeRange(int id1, int id2) {
+        for (int id = id2; id >= id1; --id) {
+            remove(id);
+        }
+    }
+
+    std::vector<Adventurer> queryById(int id) {
+        std::vector<Adventurer> result;
+        if (idToIndex.find(id) != idToIndex.end()) {
+            int index = idToIndex[id];
+            result.push_back(adventurers[index]);
+        }
+        return result;
+    }
+
+    std::vector<Adventurer> queryByName(const std::string& name) {
+        std::vector<Adventurer> result;
+        for (const auto& adventurer : adventurers) {
+            if (adventurer.name == name) {
+                result.push_back(adventurer);
+            }
+        }
+        return result;
+    }
+
+    std::vector<Adventurer> queryByStrength(char op[], int value) {
+        std::vector<Adventurer> result;
+        for (const auto& adventurer : adventurers) {
+            switch (op[0]) {
                 case '>':
-                    conditionMet = adventurer.strength > value;
-                    break;
-                case '>=':
-                    conditionMet = adventurer.strength >= value;
-                    break;
+                    if(op[1]=='='){
+                        if (adventurer.strength >= value) result.push_back(adventurer);
+                        break;
+                    }
+                    else{
+                        if (adventurer.strength > value) result.push_back(adventurer);
+                        break;
+                    }
+
                 case '<':
-                    conditionMet = adventurer.strength < value;
-                    break;
-                case '<=':
-                    conditionMet = adventurer.strength <= value;
-                    break;
-                case '!=':
-                    conditionMet = adventurer.strength != value;
-                    break;
+                    if(op[1]=='='){
+                        if (adventurer.strength <= value) result.push_back(adventurer);
+                        break;
+                    }
+                    else {
+                        if (adventurer.strength < value) result.push_back(adventurer);
+                        break;
+                    }
                 case '=':
-                    conditionMet = adventurer.strength == value;
+                    if (adventurer.strength == value) result.push_back(adventurer);
                     break;
-            }
-            if (conditionMet) {
-                cout << adventurer.id << " " << adventurer.name << " " << adventurer.strength << endl;
+                case '!':
+                    if (adventurer.strength != value) result.push_back(adventurer);
+                    break;
             }
         }
+        return result;
     }
-}
+
+    std::vector<Adventurer> queryRangeByStrength(int id1, int id2, char op[], int value) {
+        std::vector<Adventurer> result;
+        for (int id = id1; id <= id2; ++id) {
+            if (idToIndex.find(id) != idToIndex.end()) {
+                int index = idToIndex[id];
+                const auto& adventurer = adventurers[index];
+                switch (op[0]) {
+                    case '>':
+                        if(op[1]=='='){
+                            if (adventurer.strength >= value) result.push_back(adventurer);
+                            break;
+                        }
+                        else{
+                            if (adventurer.strength > value) result.push_back(adventurer);
+                            break;
+                        }
+
+                    case '<':
+                        if(op[1]=='='){
+                            if (adventurer.strength <= value) result.push_back(adventurer);
+                            break;
+                        }
+                        else {
+                            if (adventurer.strength < value) result.push_back(adventurer);
+                            break;
+                        }
+                    case '=':
+                        if (adventurer.strength == value) result.push_back(adventurer);
+                        break;
+                    case '!':
+                        if (adventurer.strength != value) result.push_back(adventurer);
+                        break;
+                }
+            }
+        }
+        return result;
+    }
+
+    void printAdventurers(const std::vector<Adventurer>& adventurers) {
+        for (const auto& adventurer : adventurers) {
+            std::cout << adventurer.id << " " << adventurer.name << " " << adventurer.strength << std::endl;
+        }
+    }
+};
 
 int main() {
     int m, n;
-    cin >> m >> n;
+    std::cin >> m >> n;
 
+    AdventurerManager manager;
+
+    // 读入并插入冒险家信息
     for (int i = 0; i < m; ++i) {
         int id, strength;
-        string name;
-        cin >> id >> name >> strength;
-        insertAdventurer(id, name, strength);
+        std::string name;
+        std::cin >> id >> name >> strength;
+        manager.insert(id, name, strength);
     }
 
+    // 处理指令
     for (int i = 0; i < n; ++i) {
-        string command;
-        cin >> command;
+        std::string command;
+        std::cin >> command;
 
         if (command == "INSERT") {
             int id, strength;
-            string name;
-            cin >> id >> name >> strength;
-            insertAdventurer(id, name, strength);
+            std::string name;
+            std::cin >> id >> name >> strength;
+            manager.insert(id, name, strength);
         } else if (command == "DELETE") {
             int id1, id2;
-            cin >> id1 >> id2;
-            if (id2 == 0) {
-                deleteAdventurer(id1);
+            std::cin >> id1;
+            if (std::cin.peek() == ' ') {
+                std::cin >> id2;
+                manager.removeRange(id1, id2);
             } else {
-                deleteAdventurersInRange(id1, id2);
+                manager.remove(id1);
             }
         } else if (command == "QUERY") {
-            char comparison;
-            int id1, id2, value;
-            string temp;
-            cin >> id1 >> temp;
-            if (temp == "=") {
-                cin >> value;
-                queryAdventurerById(id1);
-            } else if (temp == "name") {
-                string name;
-                cin >> temp >> name;
-                queryAdventurerByName(name);
-            } else {
-                cin >> id2 >> comparison >> temp >> value;
-                queryAdventurersByStrength(id1, id2, comparison, value);
+            std::string param;
+            std::cin >> param;
+            if (param == "name") {
+                std::string name;
+                char op;
+                std::cin >>op>> name;
+                auto adventurers = manager.queryByName(name);
+                manager.printAdventurers(adventurers);
+            }
+            else if (param == "strength") {
+                char op[2];
+                int value;
+                std::cin >> op >> value;
+                auto adventurers = manager.queryByStrength(op, value);
+                manager.printAdventurers(adventurers);
+            }
+            else if (std::cin.peek()!=' ') {
+                int id = std::stoi(param);
+                auto adventurers = manager.queryById(id);
+                manager.printAdventurers(adventurers);
+            }
+            else {
+                int id1=std::stoi(param), id2, value;
+                char op[2];
+                std::string s;
+                std::cin >> id2 >> s >> op >> value;
+                auto adventurers = manager.queryRangeByStrength(id1, id2, op, value);
+                manager.printAdventurers(adventurers);
             }
         }
     }
