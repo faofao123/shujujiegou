@@ -60,5 +60,8 @@
 /Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/dazuoye-2.dir
 /Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/dazuoye-1.dir
 /Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/shicuo1.dir
+/Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/zuoye1.dir
+/Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/zuoye2.dir
+/Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/zuoye3.dir
 /Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/edit_cache.dir
 /Users/fyz/CLionProjects/shujujiegou/cmake-build-debug/CMakeFiles/rebuild_cache.dir
